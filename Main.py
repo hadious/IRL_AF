@@ -71,7 +71,7 @@ for epoch in range(5):  # just 5 epochs for demo
         # Generate two views
         rotations = torch.randint(0, 4, (imgs.size(0),)) * 90
         imgs_view1 = torch.stack([get_augmented_view(img, rotations[i].item()) for i, img in enumerate(imgs)])
-        imgs_view2 = torch.stack([get_augmented_view(img, rotations[(i+1)%imgs.size(0)].item()) for i, img in enumerate(imgs)])
+        imgs_view2 = torch.stack([get_augmented_view(img, 0) for img in imgs])
 
         imgs_view1, imgs_view2 = imgs_view1.to(device), imgs_view2.to(device)
 
@@ -80,10 +80,8 @@ for epoch in range(5):  # just 5 epochs for demo
         with torch.no_grad():
             z2, _ = model(imgs_view2)
 
-        # Invariance Loss (Cosine similarity)
-        inv_loss = -F.cosine_similarity(z1, z2.detach()).mean()
+        inv_loss = (1 - F.cosine_similarity(z1, z2.detach())).mean()
 
-        # Equivariance Loss (Rotation prediction)
         eq_loss = F.cross_entropy(pred_rot, rotations.to(device)//90)
 
         # Total loss
